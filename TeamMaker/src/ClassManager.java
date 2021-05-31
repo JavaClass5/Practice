@@ -62,7 +62,7 @@ public class ClassManager {
 
     private void draw() {
     	System.out.println("뽑기 옵션을 선택해주세요.");
-    	System.out.println("1. 랜덤\t2. 랜덤2\t3. 나이");
+    	System.out.println("1. 랜덤\t2. 나이");
     	int option = sc.nextInt();
     	
     	switch (option) {
@@ -100,23 +100,89 @@ public class ClassManager {
         ArrayList<Student> studentList = db.selectAll();
 
         int[] teamNumberArr = new int[studentList.size()];
+        int[] teamCountArr = new int[teamCount];
         for (int i = 0; i < teamNumberArr.length; i++) {
             teamNumberArr[i] = i % teamCount;
+            teamCountArr[teamNumberArr[i]]++;
         }
 
-        for (int i = 0; i < teamNumberArr.length; i++) {
-            int random01 = (int)(Math.random() * teamNumberArr.length);
-            int random02 = (int)(Math.random() * teamNumberArr.length);
-            int temp = teamNumberArr[random01];
-            teamNumberArr[random01] = teamNumberArr[random02];
-            teamNumberArr[random02] = temp;
-        }
+        int[] totalAgeArr = new int[teamCount];
+        int[] totalPointArr = new int[teamCount];
+        float[] avgAgeArr = new float[teamCount];
+        float[] avgPointArr = new float[teamCount];
+        
+        int tryCount = 0;
+        while (true) {
+        	System.out.printf("tryCount : %d\n", ++tryCount);
 
-        for (int i = 0; i < studentList.size(); i++) {
-            studentList.get(i).team = teamNumberArr[i];
-        }
+        	for (int i = 0; i < totalAgeArr.length; i++) {
+        		totalAgeArr[i] = 0;
+        	}
+        	
+        	for (int i = 0; i < totalPointArr.length; i++) {
+        		totalPointArr[i] = 0;
+        	}
+        	
+            for (int i = 0; i < teamNumberArr.length; i++) {
+                int random01 = (int)(Math.random() * teamNumberArr.length);
+                int random02 = (int)(Math.random() * teamNumberArr.length);
+                int temp = teamNumberArr[random01];
+                teamNumberArr[random01] = teamNumberArr[random02];
+                teamNumberArr[random02] = temp;
+            }
 
+            int totalFemaleCount = 0;
+            int[] femaleCountArr = new int[teamCount];
+            for (int i = 0; i < studentList.size(); i++) {
+            	Student student = studentList.get(i); 
+                student.team = teamNumberArr[i];
+                
+                if (student.gender == GENDER.FEMALE) {
+                    femaleCountArr[teamNumberArr[i]]++;
+                    totalFemaleCount++;
+                }
+            }
+            
+            boolean pass = true;
+            int allowCount = totalFemaleCount % teamCount;
+            for (int i = 0; i < femaleCountArr.length - 1; i++) {
+            	if (Math.abs(femaleCountArr[i] - femaleCountArr[i + 1]) > allowCount) {
+            		pass = false;
+            	}
+            }
+            
+            if (pass == false)
+            	continue;
+            
+            for (int i = 0; i < studentList.size(); i++) {
+            	Student student = studentList.get(i);
+            	totalAgeArr[student.team] += student.age;
+            	totalPointArr[student.team] += student.point;
+            }
+            
+            for (int i = 0; i < teamCount; i++) {
+            	avgAgeArr[i] = totalAgeArr[i] / (float)teamCountArr[i];
+            	avgPointArr[i] = totalPointArr[i] / (float)teamCountArr[i];
+            }
+
+            for (int i = 0; i < teamCount - 1; i++) {
+            	if (Math.abs(avgAgeArr[i] - avgAgeArr[i + 1]) > 2 ||
+            		Math.abs(avgPointArr[i] - avgPointArr[i + 1]) > 2) {
+            		pass = false;
+            		break;
+            	}
+            }
+            
+            if (pass == true) {
+            	break;
+            }
+        }
+        
         showTeam();
+        
+        for (int i = 0; i < teamCount; i++) {
+            System.out.printf("[Team %d] 평균 나이 : %f, 평균 POINT : %f\n", i, avgAgeArr[i], avgPointArr[i]);	
+        }
     }
     
     private void makeTeamRandom02() {
